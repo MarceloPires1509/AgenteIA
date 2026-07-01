@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setAgentState(agents.tech, 'working', 'Avaliando Arquitetura...');
         setAgentState(agents.qa, 'working', 'Levantando Falhas...');
 
+        try {
             // Dynamic Model Discovery to prevent 404 errors
             let selectedModel = 'models/gemini-1.5-flash';
             try {
