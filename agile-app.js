@@ -9,13 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let attachedImages = [];
 
-    // Handler for pasting images
+    // Handler for pasting images globally
     const handlePaste = (e) => {
         const items = e.clipboardData?.items;
         if (!items) return;
         
+        let hasImage = false;
         for (let i = 0; i < items.length; i++) {
             if (items[i].type.indexOf('image') !== -1) {
+                hasImage = true;
                 const file = items[i].getAsFile();
                 if (!file) continue;
                 
@@ -28,8 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderImagePreviews();
                 };
                 reader.readAsDataURL(file);
-                e.preventDefault();
             }
+        }
+        
+        if (hasImage) {
+            e.preventDefault();
         }
     };
 
@@ -56,12 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    if (glpiInput) {
-        glpiInput.addEventListener('paste', handlePaste);
-    }
-    if (glpiAnswers) {
-        glpiAnswers.addEventListener('paste', handlePaste);
-    }
+    // Attach global window paste listener to catch pasting images anywhere on the page
+    window.addEventListener('paste', handlePaste);
 
     // Load saved API key on startup safely
     try {
