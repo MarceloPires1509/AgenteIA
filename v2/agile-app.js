@@ -5,10 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCopy = document.getElementById('btn-copy');
     const apiKeyInput = document.getElementById('api-key-input');
 
-    // Load saved API key on startup
-    const savedApiKey = localStorage.getItem('agileSquadApiKey');
-    if (savedApiKey) {
-        apiKeyInput.value = savedApiKey;
+    // Load saved API key on startup safely
+    try {
+        const savedApiKey = localStorage.getItem('agileSquadApiKey');
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+        }
+    } catch (e) {
+        console.warn('Local storage not available.');
     }
 
     // Agents UI Elements
@@ -57,8 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Save API key for future visits
-        localStorage.setItem('agileSquadApiKey', apiKey);
+        // Save API key for future visits safely
+        try {
+            localStorage.setItem('agileSquadApiKey', apiKey);
+        } catch (e) {
+            console.warn('Local storage not available.');
+        }
 
         // Lock UI
         btnAnalyze.disabled = true;
