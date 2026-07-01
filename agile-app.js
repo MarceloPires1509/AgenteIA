@@ -5,10 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCopy = document.getElementById('btn-copy');
     const apiKeyInput = document.getElementById('api-key-input');
 
-    // Load saved API key on startup
-    const savedApiKey = localStorage.getItem('agileSquadApiKey');
-    if (savedApiKey) {
-        apiKeyInput.value = savedApiKey;
+    // Load saved API key on startup safely
+    try {
+        const savedApiKey = localStorage.getItem('agileSquadApiKey');
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+        }
+    } catch (e) {
+        console.warn('Local storage not available.');
     }
 
     // Agents UI Elements
@@ -57,8 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Save API key for future visits
-        localStorage.setItem('agileSquadApiKey', apiKey);
+        // Save API key for future visits safely
+        try {
+            localStorage.setItem('agileSquadApiKey', apiKey);
+        } catch (e) {
+            console.warn('Local storage not available.');
+        }
 
         // Lock UI
         btnAnalyze.disabled = true;
@@ -78,7 +86,27 @@ document.addEventListener('DOMContentLoaded', () => {
         setAgentState(agents.qa, 'working', 'Levantando Falhas...');
 
         try {
-            // Call Gemini API REST
+            // Dynamic Model Discovery to prevent 404 errors
+            let selectedModel = 'models/gemini-1.5-flash';
+            try {
+                const modelsResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                if (modelsResp.ok) {
+                    const modelsData = await modelsResp.json();
+                    const available = modelsData.models.filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'));
+                    if (available.length > 0) {
+                        // Prefer 1.5 flash, then 1.5 pro, then fallback to anything
+                        const flash = available.find(m => m.name.includes('1.5-flash'));
+                        const pro = available.find(m => m.name.includes('1.5-pro'));
+                        selectedModel = flash ? flash.name : (pro ? pro.name : available[0].name);
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to fetch models list, using default.', e);
+            }
+
+            // Strip "models/" prefix if present in the selectedModel name to avoid models/models/ duplication
+            const finalModelName = selectedModel.replace('models/', '');
+
             const prompt = `Atue como uma Squad Ágil completa contendo 3 especialistas: um Product Owner Sênior, um Engenheiro QA Sênior e um Arquiteto Tech Lead.
 Sua missão é analisar o chamado de suporte/requisito abaixo e transformá-lo em uma User Story completa.
 
@@ -103,7 +131,7 @@ FORMATO DA SAÍDA ESPERADA EM MARKDOWN:
 ## 🛠️ Apontamentos Técnicos (Tech Lead)
 [Avaliação de arquitetura, banco de dados, logs e segurança]`;
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${finalModelName}:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -138,10 +166,14 @@ FORMATO DA SAÍDA ESPERADA EM MARKDOWN:
         } catch (error) {
             console.error(error);
             outputBoard.innerHTML = `
-                <div class="empty-state" style="color: #fc8181;">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <p>Falha ao conectar com a IA.</p>
-                    <small style="opacity: 0.8;">Verifique se sua API Key é válida.<br>${error.message}</small>
+                <div class="empty-state" style="color: #fc8181; text-align: left; overflow: auto;">
+                    <i class="fa-solid fa-bug"></i>
+                    <p style="font-weight: bold; margin-bottom: 10px;">Falha Interna Detalhada</p>
+                    <small style="font-family: monospace; white-space: pre-wrap; font-size: 11px;">
+Modelo Selecionado: ${typeof selectedModel !== 'undefined' ? selectedModel : 'N/A'}
+Erro: ${error.message}
+Stack: ${error.stack || 'N/A'}
+                    </small>
                 </div>
             `;
             resetAgents();
