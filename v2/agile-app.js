@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const modelsResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
                 if (modelsResp.ok) {
                     const modelsData = await modelsResp.json();
-                    const available = modelsData.models.filter(m => m.supportedGenerationMethods.includes('generateContent'));
+                    const available = modelsData.models.filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'));
                     if (available.length > 0) {
                         // Prefer 1.5 flash, then 1.5 pro, then fallback to anything
                         const flash = available.find(m => m.name.includes('1.5-flash'));
@@ -157,10 +157,14 @@ FORMATO DA SAÍDA ESPERADA EM MARKDOWN:
         } catch (error) {
             console.error(error);
             outputBoard.innerHTML = `
-                <div class="empty-state" style="color: #fc8181;">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <p>Falha ao conectar com a IA.</p>
-                    <small style="opacity: 0.8;">Verifique se sua API Key é válida.<br>${error.message}</small>
+                <div class="empty-state" style="color: #fc8181; text-align: left; overflow: auto;">
+                    <i class="fa-solid fa-bug"></i>
+                    <p style="font-weight: bold; margin-bottom: 10px;">Falha Interna Detalhada</p>
+                    <small style="font-family: monospace; white-space: pre-wrap; font-size: 11px;">
+Modelo Selecionado: ${typeof selectedModel !== 'undefined' ? selectedModel : 'N/A'}
+Erro: ${error.message}
+Stack: ${error.stack || 'N/A'}
+                    </small>
                 </div>
             `;
             resetAgents();
