@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const glpiInput = document.getElementById('glpi-input');
     const outputBoard = document.getElementById('output-board');
     const btnCopy = document.getElementById('btn-copy');
+    const apiKeyInput = document.getElementById('api-key-input');
 
     // Agents UI Elements
     const agents = {
@@ -25,100 +26,120 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.values(agents).forEach(agent => setAgentState(agent, 'idle', 'Aguardando...'));
     };
 
-    const mockUserStory = `
-# User Story: Resolução de Bug na Exportação de PDF (GLPI)
-
-> [!NOTE]
-> Gerado automaticamente via análise da Squad de Agentes a partir do chamado GLPI.
-
-## Descrição da Funcionalidade
-
-**Como um** Usuário do sistema,
-**eu quero** conseguir exportar o boletim do aluno em formato PDF sem erros,
-**para que** eu possa entregar o documento impresso aos responsáveis ou arquivá-lo digitalmente.
-
----
-
-## 🟢 Critérios de Aceite de Negócio (PO)
-* **Dado** que estou na tela do boletim do aluno,
-* **Quando** clico no botão "Exportar PDF",
-* **Então** o sistema deve gerar e baixar o arquivo corretamente, sem retornar a tela de Erro 500.
-
----
-
-## 🔴 Critérios de Aceite de Exceção (QA)
-* **Dado** que o serviço de geração de PDF (backend) sofra timeout devido ao volume de dados,
-* **Quando** a geração falhar,
-* **Então** o sistema deve exibir uma mensagem amigável ao usuário ("Falha ao gerar o PDF. Tente novamente em instantes.") em vez de estourar um Erro 500 no navegador.
-* **E** o log de erro no servidor deve capturar o stacktrace original para o suporte nível 2.
-
----
-
-## 🛠️ Apontamentos Técnicos (Tech Lead)
-* **Causa Raiz:** O erro 500 relatado geralmente ocorre devido ao esgotamento de memória no servidor Node.js/PHP ao processar relatórios muito grandes (turmas inteiras), ou a biblioteca de renderização (ex: Puppeteer/wkhtmltopdf) sendo interrompida pelo SO.
-* **Resolução Proposta:** 
-  1. Adicionar logs detalhados ao bloco \`try/catch\` da rota de exportação.
-  2. Implementar \`timeout\` seguro na requisição (ex: 60s max).
-  3. Sugestão arquitetural: Alterar o download direto para um modelo assíncrono (o sistema envia o PDF para o painel de notificações do usuário quando o processamento em *background* terminar).
-`;
+    let generatedUserStory = '';
 
     btnAnalyze.addEventListener('click', async () => {
         const text = glpiInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
+
         if (!text) {
             alert('Por favor, cole os dados do chamado GLPI primeiro.');
             return;
         }
 
+        if (!apiKey) {
+            alert('Por favor, cole sua Chave de API do Gemini na barra lateral.');
+            return;
+        }
+
         // Lock UI
         btnAnalyze.disabled = true;
-        btnAnalyze.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Orquestrando Agentes...';
+        btnAnalyze.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando à IA...';
         btnCopy.disabled = true;
         outputBoard.innerHTML = `
             <div class="empty-state">
                 <i class="fa-solid fa-microchip fa-spin"></i>
-                <p>Processando pipeline de IA...</p>
+                <p>Processando inteligência artificial...</p>
             </div>
         `;
         resetAgents();
 
-        // Simulate Pipeline
-        // Step 1: PO starts analyzing
+        // Simulate parallel start in UI
         setAgentState(agents.po, 'working', 'Analisando Negócio...');
-        await sleep(2500);
-        setAgentState(agents.po, 'done', 'Critérios Definidos');
-
-        // Step 2: Tech and QA run in parallel
         setAgentState(agents.tech, 'working', 'Avaliando Arquitetura...');
         setAgentState(agents.qa, 'working', 'Levantando Falhas...');
-        await sleep(3000);
-        
-        setAgentState(agents.qa, 'done', 'Cenários Prontos');
-        await sleep(1000); // Tech lead takes a bit longer
-        setAgentState(agents.tech, 'done', 'Revisão Técnica Concluída');
 
-        // Step 3: Render Result
-        btnAnalyze.innerHTML = '<i class="fa-solid fa-bolt"></i> Acionar Squad de Agentes';
-        btnAnalyze.disabled = false;
-        btnCopy.disabled = false;
+        try {
+            // Call Gemini API REST
+            const prompt = `Atue como uma Squad Ágil completa contendo 3 especialistas: um Product Owner Sênior, um Engenheiro QA Sênior e um Arquiteto Tech Lead.
+Sua missão é analisar o chamado de suporte/requisito abaixo e transformá-lo em uma User Story completa.
 
-        // If marked.js is loaded, parse markdown
-        if (typeof marked !== 'undefined') {
-            outputBoard.innerHTML = marked.parse(mockUserStory);
-        } else {
-            // Fallback
-            outputBoard.innerHTML = \`<pre style="white-space: pre-wrap; font-family: inherit;">\${mockUserStory}</pre>\`;
+CHAMADO GLPI:
+"${text}"
+
+FORMATO DA SAÍDA ESPERADA EM MARKDOWN:
+# User Story: [Título Curto]
+
+## 📖 Descrição da Funcionalidade
+[No formato: Como um... eu quero... para que...]
+
+---
+## 🟢 Critérios de Aceite de Negócio (PO)
+[Lista de BDD: Dado que... Quando... Então...]
+
+---
+## 🔴 Critérios de Aceite de Exceção e Testes (QA)
+[Lista de casos extremos, falhas e sad paths em BDD]
+
+---
+## 🛠️ Apontamentos Técnicos (Tech Lead)
+[Avaliação de arquitetura, banco de dados, logs e segurança]`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error?.message || 'Erro na API do Gemini');
+            }
+
+            const data = await response.json();
+            generatedUserStory = data.candidates[0].content.parts[0].text;
+
+            // Mark agents as done in UI to simulate workflow completion
+            setAgentState(agents.po, 'done', 'Critérios Definidos');
+            setAgentState(agents.qa, 'done', 'Cenários Prontos');
+            setAgentState(agents.tech, 'done', 'Revisão Técnica Concluída');
+
+            // Render Result
+            if (typeof marked !== 'undefined') {
+                outputBoard.innerHTML = marked.parse(generatedUserStory);
+            } else {
+                outputBoard.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${generatedUserStory}</pre>`;
+            }
+
+        } catch (error) {
+            console.error(error);
+            outputBoard.innerHTML = `
+                <div class="empty-state" style="color: #fc8181;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p>Falha ao conectar com a IA.</p>
+                    <small style="opacity: 0.8;">Verifique se sua API Key é válida.<br>${error.message}</small>
+                </div>
+            `;
+            resetAgents();
+        } finally {
+            btnAnalyze.innerHTML = '<i class="fa-solid fa-bolt"></i> Acionar Squad de Agentes';
+            btnAnalyze.disabled = false;
+            btnCopy.disabled = false;
         }
     });
 
     btnCopy.addEventListener('click', () => {
-        navigator.clipboard.writeText(mockUserStory).then(() => {
+        if (!generatedUserStory) return;
+        navigator.clipboard.writeText(generatedUserStory).then(() => {
             const originalText = btnCopy.innerHTML;
             btnCopy.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
             setTimeout(() => { btnCopy.innerHTML = originalText; }, 2000);
         });
     });
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
 });
