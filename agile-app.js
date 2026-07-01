@@ -5,6 +5,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const outputBoard = document.getElementById('output-board');
     const btnCopy = document.getElementById('btn-copy');
     const apiKeyInput = document.getElementById('api-key-input');
+    const imagePreviews = document.getElementById('image-previews');
+    
+    let attachedImages = [];
+
+    // Handler for pasting images
+    const handlePaste = (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (!file) continue;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64Data = event.target.result.split(',')[1];
+                    const mimeType = file.type;
+                    
+                    attachedImages.push({ mimeType, data: base64Data });
+                    renderImagePreviews();
+                };
+                reader.readAsDataURL(file);
+                e.preventDefault();
+            }
+        }
+    };
+
+    const renderImagePreviews = () => {
+        if (!imagePreviews) return;
+        imagePreviews.innerHTML = '';
+        attachedImages.forEach((img, idx) => {
+            const item = document.createElement('div');
+            item.className = 'image-preview-item';
+            item.innerHTML = `
+                <img src="data:${img.mimeType};base64,${img.data}" alt="Preview">
+                <button type="button" class="btn-remove-image" data-index="${idx}">&times;</button>
+            `;
+            imagePreviews.appendChild(item);
+        });
+        
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.image-preview-item .btn-remove-image').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.target.getAttribute('data-index'));
+                attachedImages.splice(idx, 1);
+                renderImagePreviews();
+            });
+        });
+    };
+
+    if (glpiInput) {
+        glpiInput.addEventListener('paste', handlePaste);
+    }
+    if (glpiAnswers) {
+        glpiAnswers.addEventListener('paste', handlePaste);
+    }
 
     // Load saved API key on startup safely
     try {
@@ -190,15 +247,23 @@ ${pontoidKnowledge}
 `;
 
 
+            const parts = [{ text: prompt }];
+            attachedImages.forEach(img => {
+                parts.push({
+                    inlineData: {
+                        mimeType: img.mimeType,
+                        data: img.data
+                    }
+                });
+            });
+
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${finalModelName}:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: prompt }]
-                    }]
+                    contents: [{ parts }]
                 })
             });
 
@@ -209,6 +274,10 @@ ${pontoidKnowledge}
 
             const data = await response.json();
             generatedUserStory = data.candidates[0].content.parts[0].text;
+
+            // Clear images on success
+            attachedImages = [];
+            renderImagePreviews();
 
             // Mark agents as done in UI to simulate workflow completion
             setAgentState(agents.po, 'done', 'Critérios Definidos');
