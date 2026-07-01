@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCopy = document.getElementById('btn-copy');
     const apiKeyInput = document.getElementById('api-key-input');
 
+    // Load saved API key on startup
+    const savedApiKey = localStorage.getItem('agileSquadApiKey');
+    if (savedApiKey) {
+        apiKeyInput.value = savedApiKey;
+    }
+
     // Agents UI Elements
     const agents = {
         po: { card: document.getElementById('agent-po'), status: document.querySelector('#agent-po .status') },
@@ -50,6 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
             return;
         }
+
+        // Save API key for future visits
+        localStorage.setItem('agileSquadApiKey', apiKey);
 
         // Lock UI
         btnAnalyze.disabled = true;
