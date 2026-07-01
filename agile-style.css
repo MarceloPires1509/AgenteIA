@@ -367,3 +367,82 @@ body {
 .image-preview-item .btn-remove-image:hover {
     background: rgb(239, 68, 68);
 }
+
+/* Responsividade para Celulares e Tablets */
+@media (max-width: 1024px) {
+    body {
+        display: block;
+        overflow-y: auto;
+        height: auto;
+    }
+    
+    .app-container {
+        flex-direction: column;
+        height: auto;
+        padding: 1rem;
+        gap: 1rem;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 1.25rem;
+    }
+    
+    .sidebar-header {
+        margin-bottom: 1rem;
+    }
+    
+    .main-content {
+        height: auto;
+        gap: 1rem;
+    }
+    
+    .main-header {
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .main-header h1 {
+        font-size: 1.3rem;
+    }
+    
+    .main-header p {
+        font-size: 0.85rem;
+    }
+    
+    .workspace {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+        gap: 1rem;
+    }
+    
+    .input-section, .output-section {
+        width: 100%;
+        height: auto;
+        flex: none;
+        padding: 1.25rem;
+    }
+    
+    #glpi-input, #glpi-answers {
+        min-height: 120px;
+        flex: none;
+        margin-bottom: 0.8rem;
+    }
+    
+    #glpi-answers {
+        margin-bottom: 1.25rem;
+    }
+    
+    .output-board {
+        min-height: 350px;
+        height: auto;
+        flex: none;
+    }
+    
+    .btn-primary {
+        padding: 0.8rem;
+        font-size: 0.95rem;
+    }
+}
