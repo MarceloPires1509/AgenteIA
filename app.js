@@ -33,12 +33,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const apiKey = apiKeyInput.value.trim();
 
         if (!text) {
-            alert('Por favor, cole os dados do chamado GLPI primeiro.');
+            outputBoard.innerHTML = `
+                <div class="empty-state" style="color: #fc8181;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p>Por favor, cole os dados do chamado GLPI no campo texto.</p>
+                </div>`;
             return;
         }
 
         if (!apiKey) {
-            alert('Por favor, cole sua Chave de API do Gemini na barra lateral.');
+            outputBoard.innerHTML = `
+                <div class="empty-state" style="color: #fc8181;">
+                    <i class="fa-solid fa-key"></i>
+                    <p>Faltando Chave de API!</p>
+                    <small>Você precisa colar sua Gemini API Key no menu lateral esquerdo para usar a IA.</small>
+                </div>`;
             return;
         }
 
