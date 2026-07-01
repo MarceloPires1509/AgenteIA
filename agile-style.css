@@ -200,8 +200,7 @@ body {
     color: var(--text-main);
 }
 
-#glpi-input {
-    flex: 1;
+#glpi-input, #glpi-answers {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--panel-border);
     border-radius: 8px;
@@ -210,11 +209,20 @@ body {
     font-size: 0.95rem;
     resize: none;
     outline: none;
-    margin-bottom: 1.5rem;
     transition: border-color 0.3s;
 }
 
-#glpi-input:focus {
+#glpi-input {
+    flex: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+#glpi-answers {
+    flex: 1;
+    margin-bottom: 0.5rem;
+}
+
+#glpi-input:focus, #glpi-answers:focus {
     border-color: var(--accent-primary);
 }
 

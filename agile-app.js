@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const btnAnalyze = document.getElementById('btn-analyze');
     const glpiInput = document.getElementById('glpi-input');
+    const glpiAnswers = document.getElementById('glpi-answers');
     const outputBoard = document.getElementById('output-board');
     const btnCopy = document.getElementById('btn-copy');
     const apiKeyInput = document.getElementById('api-key-input');
@@ -50,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnAnalyze.addEventListener('click', async () => {
         const text = glpiInput.value.trim();
+        const answers = glpiAnswers ? glpiAnswers.value.trim() : '';
         const apiKey = apiKeyInput.value.trim();
 
         if (!text) {
@@ -117,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Strip "models/" prefix if present in the selectedModel name to avoid models/models/ duplication
             const finalModelName = selectedModel.replace('models/', '');
 
-            const prompt = `Você é uma Squad Ágil profissional de alto nível especializada no sistema Ponto iD (SGE - Sistema de Gestão Escolar e PPI - Programa Primeira Infância). A Squad é composta por 3 especialistas seniores: um Product Owner (PO), um Arquiteto de Software (Tech Lead) e um Engenheiro de QA.
+            let prompt = `Você é uma Squad Ágil profissional de alto nível especializada no sistema Ponto iD (SGE - Sistema de Gestão Escolar e PPI - Programa Primeira Infância). A Squad é composta por 3 especialistas seniores: um Product Owner (PO), um Arquiteto de Software (Tech Lead) e um Engenheiro de QA.
 
 Sua missão é analisar o chamado do GLPI fornecido abaixo com extremo rigor profissional e precisão técnica.
 
@@ -131,14 +133,24 @@ Sua missão é analisar o chamado do GLPI fornecido abaixo com extremo rigor pro
 3. **Tratamento de Dúvidas e Incertezas (CRÍTICO)**:
    - Se o chamado do GLPI for ambíguo, incompleto, confuso ou se faltarem dados cruciais para entender a regra de negócio ou a arquitetura técnica, **você deve PRIORIZAR O QUESTIONAMENTO**.
    - Nesses casos, a sua resposta **DEVE iniciar obrigatoriamente com a seção "# ⚠️ Impedimento: Dúvidas Cruciais Identificadas"**, listando de forma profissional e detalhada as perguntas que o usuário precisa responder antes que a User Story definitiva possa ser criada.
-   - Logo abaixo dessa seção de dúvidas, apresente apenas um rascunho preliminar estruturado da User Story, marcando claramente as premissas assumidas no formato: "*[Premissa PO/QA/Tech: ...]*".
+   - **ENTRETANTO**, se o usuário já forneceu respostas na seção "RESPOSTAS DO USUÁRIO ÀS DÚVIDAS", você deve usar essas respostas para esclarecer as ambiguidades, resolver as dúvidas anteriormente levantadas e gerar a User Story definitiva completa, sem a seção de impedimento.
+   - Logo abaixo dessa seção de dúvidas (se ela ainda for necessária), apresente apenas um rascunho preliminar estruturado da User Story, marcando claramente as premissas assumidas no formato: "*[Premissa PO/QA/Tech: ...]*".
 
 ### CHAMADO GLPI:
 "${text}"
+`;
 
+            if (answers) {
+                prompt += `
+### RESPOSTAS DO USUÁRIO ÀS DÚVIDAS / NOTAS ADICIONAIS:
+"${answers}"
+`;
+            }
+
+            prompt += `
 ### FORMATO DE SAÍDA EXIGIDO:
 
-Se o chamado for claro e suficiente:
+Se o chamado for claro e suficiente (ou se as dúvidas foram respondidas e resolvidas):
 # User Story: [Título Curto e Profissional]
 
 ## 📖 Descrição da Funcionalidade
@@ -162,7 +174,7 @@ Se o chamado for claro e suficiente:
 - [Impactos técnicos identificados]
 
 ---
-Se o chamado contiver dúvidas ou ambiguidades cruciais:
+Se o chamado contiver dúvidas ou ambiguidades cruciais que ainda NÃO foram resolvidas pelas respostas do usuário:
 # ⚠️ Impedimento: Dúvidas Cruciais Identificadas
 [Explicação detalhada de quais regras de negócio ou fluxos técnicos ficaram confusos/incompletos]
 - **Dúvida 1**: [Pergunta clara e objetiva para o usuário]
