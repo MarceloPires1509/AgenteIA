@@ -117,29 +117,60 @@ document.addEventListener('DOMContentLoaded', () => {
             // Strip "models/" prefix if present in the selectedModel name to avoid models/models/ duplication
             const finalModelName = selectedModel.replace('models/', '');
 
-            const prompt = `Atue como uma Squad Ágil completa contendo 3 especialistas: um Product Owner Sênior, um Engenheiro QA Sênior e um Arquiteto Tech Lead.
-Sua missão é analisar o chamado de suporte/requisito abaixo e transformá-lo em uma User Story completa. Você DEVE analisar as regras contidas na BASE DE CONHECIMENTO PONTO ID para garantir que a User Story esteja perfeitamente alinhada com as regras de negócio reais da empresa (como matrículas, remanejamentos, encerramento de turmas, etc).
+            const prompt = `Você é uma Squad Ágil profissional de alto nível especializada no sistema Ponto iD (SGE - Sistema de Gestão Escolar e PPI - Programa Primeira Infância). A Squad é composta por 3 especialistas seniores: um Product Owner (PO), um Arquiteto de Software (Tech Lead) e um Engenheiro de QA.
 
-CHAMADO GLPI:
+Sua missão é analisar o chamado do GLPI fornecido abaixo com extremo rigor profissional e precisão técnica.
+
+### INSTRUÇÕES OBRIGATÓRIAS DE ATUAÇÃO:
+1. **Comportamento Profissional e Realista**: Não invente funcionalidades, botões, telas, fluxos ou integrações que não estejam explicitamente documentados na BASE DE CONHECIMENTO PONTO ID ou no chamado. Seja estritamente realista. Se uma regra não estiver clara e não estiver na base, questione em vez de presumir algo incoerente.
+2. **Análise de Impacto de Negócio**: Toda alteração no SGE/PPI tem impactos em outras áreas. Avalie e cite os impactos específicos em:
+   - Censo Escolar/Educacenso (consistência de dados obrigatórios exigidos pelo censo).
+   - Coletores Faciais (uso de Matrícula Coletor, sincronização com controladores faciais, exclusão de biometria facial).
+   - Aplicativo de Responsáveis (APP EDUCATION - acessos, CPFs, e-mails, permissão de visualização e regras de parentesco/responsável legal).
+   - Histórico Escolar e Notas (regra de aprovação, notas, carga horária, progressão e transferências ativas).
+3. **Tratamento de Dúvidas e Incertezas (CRÍTICO)**:
+   - Se o chamado do GLPI for ambíguo, incompleto, confuso ou se faltarem dados cruciais para entender a regra de negócio ou a arquitetura técnica, **você deve PRIORIZAR O QUESTIONAMENTO**.
+   - Nesses casos, a sua resposta **DEVE iniciar obrigatoriamente com a seção "# ⚠️ Impedimento: Dúvidas Cruciais Identificadas"**, listando de forma profissional e detalhada as perguntas que o usuário precisa responder antes que a User Story definitiva possa ser criada.
+   - Logo abaixo dessa seção de dúvidas, apresente apenas um rascunho preliminar estruturado da User Story, marcando claramente as premissas assumidas no formato: "*[Premissa PO/QA/Tech: ...]*".
+
+### CHAMADO GLPI:
 "${text}"
 
-FORMATO DA SAÍDA ESPERADA EM MARKDOWN:
-# User Story: [Título Curto]
+### FORMATO DE SAÍDA EXIGIDO:
+
+Se o chamado for claro e suficiente:
+# User Story: [Título Curto e Profissional]
 
 ## 📖 Descrição da Funcionalidade
-[No formato: Como um... eu quero... para que...]
+*Como um* [Ator/Perfil de Usuário]
+*Quero* [Ação no sistema]
+*Para que* [Valor/Resultado de negócio]
 
 ---
-## 🟢 Critérios de Aceite de Negócio (PO)
-[Lista de BDD: Dado que... Quando... Então... baseando-se estritamente na Base de Conhecimento quando aplicável]
+## 🟢 Critérios de Aceite e Regras de Negócio (PO)
+- [BDD] Dado que... Quando... Então...
+- [Mapeamento de Regras e Impactos específicos do Ponto iD obtidos da Base de Conhecimento]
 
 ---
-## 🔴 Critérios de Aceite de Exceção e Testes (QA)
-[Lista de casos extremos, falhas e sad paths em BDD]
+## 🔴 Cenários de Teste e Exceções (QA)
+- [BDD] Dado que... Quando... Então... (Caminhos de falha, dados inválidos, limites)
+- [Impactos colaterais testáveis, ex: falha de comunicação com coletor, CPF inválido no App de Pais]
 
 ---
-## 🛠️ Apontamentos Técnicos (Tech Lead)
-[Avaliação de arquitetura, banco de dados, logs e segurança]
+## 🛠️ Diretrizes Técnicas e de Arquitetura (Tech Lead)
+- [Arquitetura/Banco de Dados/Segurança/Logs]
+- [Impactos técnicos identificados]
+
+---
+Se o chamado contiver dúvidas ou ambiguidades cruciais:
+# ⚠️ Impedimento: Dúvidas Cruciais Identificadas
+[Explicação detalhada de quais regras de negócio ou fluxos técnicos ficaram confusos/incompletos]
+- **Dúvida 1**: [Pergunta clara e objetiva para o usuário]
+- **Dúvida 2**: [Pergunta clara e objetiva para o usuário]
+
+---
+## Rascunho Preliminar (Baseado em Premissas)
+[User Story estruturada contendo avisos explícitos sobre as premissas assumidas]
 
 ---
 BASE DE CONHECIMENTO PONTO ID (CONSULTE APENAS SE HOUVER RELAÇÃO COM O CHAMADO):
