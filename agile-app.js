@@ -15,6 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Local storage not available.');
     }
 
+    // Load Knowledge Base
+    let pontoidKnowledge = '';
+    fetch('knowledge_base.txt')
+        .then(response => response.text())
+        .then(text => {
+            pontoidKnowledge = text;
+            console.log('Base de Conhecimento Ponto iD carregada.');
+        })
+        .catch(err => console.warn('Não foi possível carregar a base de conhecimento', err));
+
     // Agents UI Elements
     const agents = {
         po: { card: document.getElementById('agent-po'), status: document.querySelector('#agent-po .status') },
@@ -108,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const finalModelName = selectedModel.replace('models/', '');
 
             const prompt = `Atue como uma Squad Ágil completa contendo 3 especialistas: um Product Owner Sênior, um Engenheiro QA Sênior e um Arquiteto Tech Lead.
-Sua missão é analisar o chamado de suporte/requisito abaixo e transformá-lo em uma User Story completa.
+Sua missão é analisar o chamado de suporte/requisito abaixo e transformá-lo em uma User Story completa. Você DEVE analisar as regras contidas na BASE DE CONHECIMENTO PONTO ID para garantir que a User Story esteja perfeitamente alinhada com as regras de negócio reais da empresa (como matrículas, remanejamentos, encerramento de turmas, etc).
 
 CHAMADO GLPI:
 "${text}"
@@ -121,7 +131,7 @@ FORMATO DA SAÍDA ESPERADA EM MARKDOWN:
 
 ---
 ## 🟢 Critérios de Aceite de Negócio (PO)
-[Lista de BDD: Dado que... Quando... Então...]
+[Lista de BDD: Dado que... Quando... Então... baseando-se estritamente na Base de Conhecimento quando aplicável]
 
 ---
 ## 🔴 Critérios de Aceite de Exceção e Testes (QA)
@@ -129,7 +139,13 @@ FORMATO DA SAÍDA ESPERADA EM MARKDOWN:
 
 ---
 ## 🛠️ Apontamentos Técnicos (Tech Lead)
-[Avaliação de arquitetura, banco de dados, logs e segurança]`;
+[Avaliação de arquitetura, banco de dados, logs e segurança]
+
+---
+BASE DE CONHECIMENTO PONTO ID (CONSULTE APENAS SE HOUVER RELAÇÃO COM O CHAMADO):
+${pontoidKnowledge}
+`;
+
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${finalModelName}:generateContent?key=${apiKey}`, {
                 method: 'POST',
