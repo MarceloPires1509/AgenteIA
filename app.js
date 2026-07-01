@@ -94,7 +94,7 @@ FORMATO DA SAÍDA ESPERADA EM MARKDOWN:
 ## 🛠️ Apontamentos Técnicos (Tech Lead)
 [Avaliação de arquitetura, banco de dados, logs e segurança]`;
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
